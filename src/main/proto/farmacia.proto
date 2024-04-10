@@ -43,7 +43,8 @@ message Operacion {
   TipoOperacion tipo = 1; // Tipo de operación, compra o venta.
   repeated ProductoOperacion productos = 2; // Productos involucrados en la operación, con su precio en el momento de la operación.
   double total = 3; // Total en dinero de la operación.
-  string fecha = 4; // Fecha de la operación.
+  bool factura = 4;
+  string fecha = 5; // Fecha de la operación.
 }
 
 // Definición del inventario de la farmacia.

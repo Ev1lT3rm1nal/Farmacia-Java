@@ -13,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 // Importaciones para el manejo de fechas y colecciones.
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 // Define la clase FarmaciaService que proporciona funcionalidades para gestionar una farmacia.
@@ -26,18 +27,19 @@ public class FarmaciaService {
     // Ruta del archivo donde se guarda el estado de la farmacia.
     static final String filePath = "farmacia_data.dat";
 
-    // Constructor que intenta cargar el estado previo de la farmacia desde un archivo o crear una nueva si no existe.
+    // Constructor
     public FarmaciaService() {
         try {
-            Path path = Paths.get(filePath);
+            Path path = Paths.get(filePath); // Obtiene el path del archivo de datos.
+            // Si el archivo existe, carga su contenido y lo convierte en un objeto Farmacia; si no, crea una nueva instancia de Farmacia.Builder.
             if (Files.exists(path)) {
-                byte[] bytes = Files.readAllBytes(path);
-                farmacia = Farmacia.parseFrom(bytes).toBuilder();
+                byte[] bytes = Files.readAllBytes(path); // Lee los bytes del archivo.
+                farmacia = Farmacia.parseFrom(bytes).toBuilder(); // Convierte los bytes en un objeto Farmacia y lo prepara para modificaciones.
             } else {
-                farmacia = Farmacia.newBuilder();
+                farmacia = Farmacia.newBuilder(); // Crea un nuevo constructor de Farmacia si el archivo no existe.
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e); // Maneja posibles errores de IO lanzando una excepción de tiempo de ejecución.
         }
     }
 
@@ -59,8 +61,12 @@ public class FarmaciaService {
     }
 
     // Obtiene un producto del inventario por su índice.
-    public Producto obtenerProducto(int index) {
-        return farmacia.getInventario().getProductos(index);
+    public Producto obtenerProducto(int id) {
+        return farmacia.getInventario().getProductosList().parallelStream().filter(element -> element.getId() == id).findFirst().get();
+    }
+
+    public Long obtenerExistenciasProducto(Long id) {
+        return farmacia.getInventario().getExistenciasOrDefault(id, 0);
     }
 
     // Actualiza un producto en el inventario, reemplazando el existente con el mismo ID.
@@ -75,16 +81,16 @@ public class FarmaciaService {
 
     // Registra la compra de uno o más productos, actualizando el inventario y el historial de operaciones.
     public void comprarProducto(List<ProductoOperacion> productos) {
-        operacionProducto(productos, Operacion.TipoOperacion.TIPO_OPERACION_COMPRA);
+        operacionProducto(productos, Operacion.TipoOperacion.TIPO_OPERACION_COMPRA, false);
     }
 
     // Registra la venta de uno o más productos, actualizando el inventario y el historial de operaciones.
-    public void venderProducto(List<ProductoOperacion> productos) {
-        operacionProducto(productos, Operacion.TipoOperacion.TIPO_OPERACION_VENTA);
+    public void venderProducto(List<ProductoOperacion> productos, boolean factura) {
+        operacionProducto(productos, Operacion.TipoOperacion.TIPO_OPERACION_VENTA, factura);
     }
 
     // Método auxiliar para registrar operaciones de compra o venta de productos.
-    private void operacionProducto(List<ProductoOperacion> productos, Operacion.TipoOperacion tipo) {
+    private void operacionProducto(List<ProductoOperacion> productos, Operacion.TipoOperacion tipo, boolean factura) {
         Double total = productos.parallelStream().map(element -> element.getPrecioEnOperacion() * element.getCantidad()).reduce(0.0, Double::sum);
         Inventario inventario = farmacia.getInventario();
         Operacion operacion = Operacion.newBuilder()
@@ -92,6 +98,7 @@ public class FarmaciaService {
                 .setTipo(tipo)
                 .setFecha(dateFormat.format(new Date()))
                 .setTotal(total)
+                .setFactura(factura)
                 .build();
         Map<Long, Long> existencias = inventario.getExistenciasMap();
         productos.forEach(productoOperacion -> {
@@ -137,5 +144,17 @@ public class FarmaciaService {
     // Obtiene el historial completo de operaciones realizadas en la farmacia.
     public List<Operacion> obtenerHistorial() {
         return farmacia.getHistorialOperacionesList();
+    }
+
+    public List<Producto> buscarProductosNombre(String nombre ) {
+        return farmacia.getInventario().getProductosList().parallelStream().filter(elemento -> elemento.getNombre().contains(nombre)).collect(Collectors.toList());
+    }
+
+    public List<Producto> buscarProductosFormula(String formula ) {
+        return farmacia.getInventario().getProductosList().parallelStream().filter(elemento -> elemento.getFormula().contains(formula)).collect(Collectors.toList());
+    }
+
+    public Optional<Producto> buscarProductosId(Long id ) {
+        return farmacia.getInventario().getProductosList().parallelStream().filter(elemento -> elemento.getId() == id).findFirst();
     }
 }

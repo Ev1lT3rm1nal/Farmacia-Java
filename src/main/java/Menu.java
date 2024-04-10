@@ -1,3 +1,4 @@
+
 // Importaciones de clases necesarias para el funcionamiento del menú.
 import farmacia.Operacion;
 import farmacia.Producto;
@@ -8,8 +9,11 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 // Define la clase Menu que contiene toda la lógica para interactuar con el usuario.
 public class Menu {
@@ -68,7 +72,8 @@ public class Menu {
                     mostrarProductos();
                     break;
                 case 7:
-                    // Llama a la función para mostrar el historial de operaciones (compras y ventas).
+                    // Llama a la función para mostrar el historial de operaciones (compras y
+                    // ventas).
                     mostrarHistorial();
                     break;
                 case 0:
@@ -181,7 +186,7 @@ public class Menu {
             return;
         }
         // Obtiene el producto a modificar.
-        Producto.Builder producto = service.obtenerProducto(index - 1).toBuilder();
+        Producto.Builder producto = service.obtenerProducto(index).toBuilder();
 
         int opcion = 0;
         // Muestra las opciones de modificación disponibles para el producto
@@ -318,22 +323,22 @@ public class Menu {
             switch (opcion) {
                 case 1:
                     // Permite al usuario agregar un producto al carrito de compras.
-                    System.out.print("Ingrese el índice el producto que desea comprar: ");
-                    int indice = 0;
+                    System.out.print("Ingrese el id el producto que desea comprar: ");
+                    int id = 0;
                     try {
-                        indice = teclado.nextInt();
+                        id = teclado.nextInt();
                     } catch (InputMismatchException e) {
                         System.out.println("Debes ingresar un número válido");
                         continue;
                     } finally {
                         teclado.nextLine(); // Limpia el buffer del teclado.
                     }
-                    if (indice <= 0 || indice > size) {
-                        System.out.println("Índice no válido");
+                    if (id <= 0 || id > size) {
+                        System.out.println("Id no válido");
                         continue; // Repite el ciclo si el índice no es válido.
                     }
                     // Obtiene el producto seleccionado.
-                    Producto producto = service.obtenerProducto(indice - 1);
+                    Producto producto = service.obtenerProducto(id);
                     System.out.print("Ingrese la cantidad a comprar: ");
                     int cantidad = 0;
                     try {
@@ -383,6 +388,9 @@ public class Menu {
         // Muestra los productos con sus existencias para la venta.
         List<Entry<Producto, Long>> products = mostrarExistenciasDeProductos();
 
+        List<Long> keys = products.parallelStream().map(element -> element.getKey().getId())
+                .collect(Collectors.toList());
+
         if (products.isEmpty()) {
             return; // Sale si no hay productos disponibles para la venta.
         }
@@ -391,7 +399,8 @@ public class Menu {
 
         labeled: do {
             System.out.println("\n1. Agregar al carrito");
-            System.out.println("2. Cancelar");
+            System.out.println("2. Buscar");
+            System.out.println("3. Cancelar");
             System.out.println("0. Vender");
             System.out.print("Ingrese una opción: ");
             try {
@@ -405,26 +414,28 @@ public class Menu {
             switch (opcion) {
                 case 1:
                     // Permite al usuario agregar un producto al carrito de ventas.
-                    System.out.print("Ingrese el índice el producto que desea vender: ");
-                    int indice = 0;
+                    System.out.print("Ingrese el id el producto que desea vender: ");
+                    Long id = 0L;
                     try {
-                        indice = teclado.nextInt();
+                        id = teclado.nextLong();
                     } catch (InputMismatchException e) {
                         System.out.println("Debes ingresar un número válido");
                         continue;
                     } finally {
                         teclado.nextLine(); // Limpia el buffer del teclado.
                     }
-                    if (indice <= 0 || indice > products.size()) {
-                        System.out.println("Índice no válido");
+                    if (keys.contains(id)) {
+                        System.out.println("Id no válido");
                         continue; // Repite el ciclo si el índice no es válido.
                     }
                     // Obtiene el producto seleccionado.
-                    Producto producto = products.get(indice - 1).getKey();
+                    Long finalId = id;
+                    Entry<Producto, Long> producto_map = products.stream()
+                            .filter(element -> element.getKey().getId() == finalId).findFirst().get();
                     System.out.print("Ingrese la cantidad a vender: ");
-                    int cantidad = 0;
+                    Long cantidad = 0L;
                     try {
-                        cantidad = teclado.nextInt();
+                        cantidad = teclado.nextLong();
                     } catch (InputMismatchException e) {
                         System.out.println("Debes ingresar un número válido");
                         continue;
@@ -435,14 +446,38 @@ public class Menu {
                         System.out.println("La cantidad debe de ser mayor que 0");
                         continue; // Repite el ciclo si la cantidad no es válida.
                     }
-                    if (cantidad > products.get(indice - 1).getValue()) {
+                    if (cantidad > producto_map.getValue()) {
                         System.out.println("Existencias insuficientes");
                         continue; // Repite el ciclo si no hay suficientes existencias para la venta.
                     }
                     // Agrega el producto seleccionado al carrito de ventas.
-                    productos.add(service.agregarProducto(producto, cantidad));
+                    productos.add(service.agregarProducto(producto_map.getKey(), cantidad));
                     break;
                 case 2:
+                    Producto producto = buscarProducto();
+                    if (producto != null) {
+                        System.out.print("Ingrese la cantidad a vender: ");
+                        cantidad = 0L;
+                        try {
+                            cantidad = teclado.nextLong();
+                        } catch (InputMismatchException e) {
+                            System.out.println("Debes ingresar un número válido");
+                            continue;
+                        } finally {
+                            teclado.nextLine(); // Limpia el buffer del teclado.
+                        }
+                        if (cantidad <= 0) {
+                            System.out.println("La cantidad debe de ser mayor que 0");
+                            continue; // Repite el ciclo si la cantidad no es válida.
+                        }
+                        if (cantidad > service.obtenerExistenciasProducto(producto.getId())) {
+                            System.out.println("Existencias insuficientes");
+                            continue; // Repite el ciclo si no hay suficientes existencias para la venta.
+                        }
+                        productos.add(service.agregarProducto(producto, cantidad));
+                    }
+                    break;
+                case 3:
                     // Permite al usuario cancelar la venta.
                     System.out.print("¿Estás seguro que desea continuar? (S/N): ");
                     String respuesta = teclado.nextLine();
@@ -459,36 +494,117 @@ public class Menu {
                     System.out.print("¿Estás seguro que desea continuar? (S/N): ");
                     respuesta = teclado.nextLine();
                     if (respuesta.equalsIgnoreCase("s")) {
-                        service.venderProducto(productos); // Realiza la venta de los productos en el carrito.
+                        System.out.print("¿Deseas generar factura? (S/N): ");
+                        String factura_respuesta = teclado.nextLine();
+                        boolean factura = factura_respuesta.equalsIgnoreCase("s");
+                        service.venderProducto(productos, factura); // Realiza la venta de los productos en el carrito.
                         break labeled; // Sale del ciclo una vez completada la venta.
                     }
+
                     break;
             }
-        } while (opcion != 2); // Repite hasta que el usuario decida cancelar o completar la venta.
+        } while (opcion != 3); // Repite hasta que el usuario decida cancelar o completar la venta.
 
+    }
+
+    private static Producto buscarProducto() {
+        System.out.println("\n1. Buscar por nombre");
+        System.out.println("2. Buscar por formula");
+        System.out.println("3. Buscar por id");
+        System.out.print("Ingrese método de búsqueda: ");
+        int metodo = 0;
+        try {
+            metodo = teclado.nextInt();
+        } catch (InputMismatchException e) {
+            System.out.println("Debes ingresar un número válido");
+            return null;
+        } finally {
+            teclado.nextLine(); // Limpia el buffer del teclado.
+        }
+        if (metodo <= 0 || metodo > 3) {
+            System.out.println("Debes ingresar un número dentro del rango de selección");
+            return null;
+        }
+
+        List<Producto> productos = List.of();
+
+        switch (metodo) {
+            case 1:
+                System.out.print("Ingrese el nombre del producto: ");
+                String nombre = teclado.nextLine();
+                productos = service.buscarProductosNombre(nombre);
+                break;
+
+            case 2:
+                System.out.print("Ingrese la formula del producto: ");
+                String formula = teclado.nextLine();
+                productos = service.buscarProductosFormula(formula);
+                break;
+
+            case 3:
+                System.out.print("Ingrese el id del producto: ");
+                Long id = 0L;
+                try {
+                    id = teclado.nextLong();
+                } catch (InputMismatchException e) {
+                    System.out.println("Debes ingresar un número válido");
+                    return null;
+                } finally {
+                    teclado.nextLine(); // Limpia el buffer del teclado.
+                }
+                Optional<Producto> producto = service.buscarProductosId(id);
+                if (producto.isPresent()) {
+                    return producto.get();
+                } else {
+                    System.out.println("No se encontró ningún producto");
+                    return null;
+                }
+        }
+        if (productos.isEmpty()) {
+            System.out.println("No se encontró ningún producto");
+            return null;
+        } else {
+            imprimirProductos(productos);
+            System.out.print("Ingrese el id del producto: ");
+            Long id = 0L;
+            try {
+                id = teclado.nextLong();
+            } catch (InputMismatchException e) {
+                System.out.println("Debes ingresar un número válido");
+                return null;
+            } finally {
+                teclado.nextLine(); // Limpia el buffer del teclado.
+            }
+            Optional<Producto> producto = service.buscarProductosId(id);
+            if (producto.isPresent()) {
+                return producto.get();
+            } else {
+                System.out.println("No se encontró ningún producto");
+                return null;
+            }
+        }
     }
 
     // Método para mostrar las existencias de los productos disponibles para la
     // venta.
     private static List<Entry<Producto, Long>> mostrarExistenciasDeProductos() {
         // Obtiene la lista de productos con sus existencias.
-        List<Map.Entry<Producto, Long>> productos = new ArrayList<>(service.obtenerProductosExistencias().entrySet());
+        List<Entry<Producto, Long>> productos = new ArrayList<>(service.obtenerProductosExistencias().entrySet());
         if (productos.isEmpty()) {
             System.out.println("No hay productos que mostrar");
             return productos; // Retorna la lista vacía si no hay productos.
         }
-        AtomicInteger index = new AtomicInteger(0);
         // Muestra los detalles de cada producto junto con sus existencias.
         productos.forEach((element) -> {
             Producto product = element.getKey();
 
-            System.out.println("\n--------------- Producto " + index.incrementAndGet() + " --------------");
-            System.err.println("\tExistencias: " + element.getValue());
-            System.err.println("\tNombre: " + product.getNombre());
-            System.err.println("\tFormula: " + product.getFormula());
-            System.err.println("\tPrecio: " + product.getPrecio());
-            System.err.println("\tTipo: " + product.getTipo());
-            System.err.println("\tCantidad: " + product.getCantidad());
+            System.out.println("\n--------------- Producto " + product.getId() + " --------------");
+            System.out.println("\tExistencias: " + element.getValue());
+            System.out.println("\tNombre: " + product.getNombre());
+            System.out.println("\tFormula: " + product.getFormula());
+            System.out.println("\tPrecio: " + product.getPrecio());
+            System.out.println("\tTipo: " + product.getTipo().toString().split("_")[2]);
+            System.out.println("\tCantidad: " + product.getCantidad());
             System.out.println("-----------------------------------------");
         });
         return productos; // Retorna la lista de productos con sus existencias.
@@ -502,18 +618,22 @@ public class Menu {
             System.out.println("No hay productos que mostrar");
             return 0; // Retorna cero si no hay productos.
         }
-        AtomicInteger index = new AtomicInteger(0);
         // Muestra los detalles de cada producto.
+        imprimirProductos(productos);
+
+        return productos.size(); // Retorna el número de productos mostrados.
+    }
+
+    private static void imprimirProductos(List<Producto> productos) {
         productos.forEach(element -> {
-            System.out.println("\n--------------- Producto " + index.incrementAndGet() + " --------------");
-            System.err.println("\tNombre: " + element.getNombre());
-            System.err.println("\tFormula: " + element.getFormula());
-            System.err.println("\tPrecio: " + element.getPrecio());
-            System.err.println("\tTipo: " + element.getTipo());
-            System.err.println("\tCantidad: " + element.getCantidad());
+            System.out.println("\n--------------- Producto " + element.getId() + " --------------");
+            System.out.println("\tNombre: " + element.getNombre());
+            System.out.println("\tFormula: " + element.getFormula());
+            System.out.println("\tPrecio: " + element.getPrecio());
+            System.out.println("\tTipo: " + element.getTipo().toString().split("_")[2]);
+            System.out.println("\tCantidad: " + element.getCantidad());
             System.out.println("-----------------------------------------");
         });
-        return productos.size(); // Retorna el número de productos mostrados.
     }
 
     // Método para mostrar el historial de compras y ventas realizadas.
@@ -528,11 +648,15 @@ public class Menu {
         historial.forEach(operacion -> {
             System.out.println("\n----------------------------------------------------------");
             System.out.println("    Fecha: " + operacion.getFecha());
-            System.out.println("    Tipo: " + operacion.getTipo());
-            System.out.println("    Total: " + operacion.getTotal());
+            System.out.println("    Tipo: " + operacion.getTipo().toString().split("_")[2]);
+            System.out.print("    Total: " + operacion.getTotal());
+            if (operacion.getFactura()) {
+                System.out.print(" + IVA = " + operacion.getTotal() * 1.16);
+            }
+            System.out.println("\n    Factura: " + (operacion.getFactura() ? "Si" : "No"));
             System.out.println("    ================== Productos ==================");
             operacion.getProductosList().forEach(producto -> {
-                System.out.println("\tNombre: " + producto.getNombre() + ", cantidad: " + producto.getCantidad());
+                System.out.println("\tNombre: " + producto.getNombre() + ", cantidad: " + producto.getCantidad() + " = " + producto.getCantidad() * producto.getPrecioEnOperacion());
             });
             System.out.println("    ===============================================");
             System.out.println("\n----------------------------------------------------------");
