@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class FarmaciaService {
@@ -45,24 +46,16 @@ public class FarmaciaService {
         farmacia.getInventarioBuilder().addProductos(producto.toBuilder().setId(id)).setUltimoIdUsado(id);
     }
 
+    public Producto obtenerProducto(int index) {
+        return farmacia.getInventario().getProductos(index);
+    }
+
     public void alterarProductoInventario(Producto producto) {
         Inventario inventario = farmacia.getInventario();
         List<Producto> productos = inventario.getProductosList();
-        eliminarElementoPorId(productos, producto.getId());
-        productos.add(producto);
-        farmacia.setInventario(inventario.toBuilder().clearProductos().addAllProductos(productos));
-    }
-
-    private static void eliminarElementoPorId(List<Producto> list, long id) {
-        Iterator<Producto> iterator = list.iterator();
-
-        while (iterator.hasNext()) {
-            Producto element = iterator.next();
-            if (element.getId() == id) {
-                iterator.remove();
-                break; // Exit the loop once the element is found and removed
-            }
-        }
+        List<Producto> productos_nuevos = productos.parallelStream().filter(element -> element.getId() != producto.getId()).collect(Collectors.toList());
+        productos_nuevos.add(producto);
+        farmacia.setInventario(inventario.toBuilder().clearProductos().addAllProductos(productos_nuevos));
     }
 
     public void comprarProducto(List<ProductoOperacion> productos) {
@@ -74,7 +67,7 @@ public class FarmaciaService {
     }
 
     private void operacionProducto(List<ProductoOperacion> productos, Operacion.TipoOperacion tipo) {
-        Double total = productos.stream().map(ProductoOperacion::getPrecioEnOperacion).reduce(0.0, Double::sum);
+        Double total = productos.parallelStream().map(ProductoOperacion::getPrecioEnOperacion).reduce(0.0, Double::sum);
         Inventario inventario = farmacia.getInventario();
         Operacion operacion = Operacion.newBuilder()
                 .addAllProductos(productos)
@@ -90,16 +83,16 @@ public class FarmaciaService {
         farmacia.addHistorialOperaciones(operacion);
     }
 
-    public Map<Producto, Long> getProductosExistencias() {
+    public Map<Producto, Long> obtenerProductosExistencias() {
         Map<Producto, Long> productos = new HashMap<>();
         List<Producto> productosList = farmacia.getInventario().getProductosList();
         Map<Long, Long> existencias = farmacia.getInventario().getExistenciasMap();
 
-        existencias.forEach((key, value) -> productosList.stream().filter(elemento -> elemento.getId() == key).findFirst().ifPresent(producto1 -> productos.put(producto1, value)));
+        existencias.forEach((key, value) -> productosList.parallelStream().filter(elemento -> elemento.getId() == key).findFirst().ifPresent(producto1 -> productos.put(producto1, value)));
         return productos;
     }
 
-    public List<Producto> getProductos() {
+    public List<Producto> obtenerProductos() {
         return farmacia.getInventario().getProductosList();
     }
 

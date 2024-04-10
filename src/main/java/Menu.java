@@ -14,12 +14,12 @@ public class Menu {
         do {
             System.out.println("\n1. Agregar un producto al inventario");
             System.out.println("2. Modificar producto en inventario");
-            System.out.println("3. Comprar producto");
-            System.out.println("4. Vender producto");
+            System.out.println("3. Comprar productos");
+            System.out.println("4. Vender productos");
             System.out.println("5. Mostrar existencias de productos");
             System.out.println("6. Mostrar todos los productos");
             System.out.println("0. Salir");
-            System.out.print("Seleccione una opción: ");
+            System.out.print("\nSeleccione una opción: ");
             opcion = teclado.nextInt();
             teclado.nextLine();
             switch (opcion) {
@@ -33,11 +33,11 @@ public class Menu {
                     break;
                 case 3:
                     // Implementar lógica para comprar producto
-                    comprarProducto();
+                    comprar();
                     break;
                 case 4:
                     // Implementar lógica para vender producto
-                    venderProducto();
+                    vender();
                     break;
                 case 5:
                     // Implementar lógica para mostrar existencias de productos
@@ -59,35 +59,38 @@ public class Menu {
     }
 
     private static void agregarProductoAlInventario() throws Exception {
-        System.out.println("Ingrese el nombre del producto");
+        System.out.print("Ingrese el nombre del producto: ");
         String nombre = teclado.nextLine();
-        System.out.println("Ingrese la formula del producto");
+        System.out.print("Ingrese la formula del producto: ");
         String formula = teclado.nextLine();
-        System.out.println("Ingrese el precio del producto");
+        System.out.print("Ingrese el precio del producto: ");
         double precio = teclado.nextDouble();
-        if (precio < 0) {
-            throw new Exception("El precio debe de ser mayor a 0");
-        }
         teclado.nextLine();
-        System.out.println("Ingrese el tipo del producto");
+        if (precio < 0) {
+            System.out.println("El precio debe de ser mayor o igual a 0");
+            return;
+        }
         System.out.println("1. Tableta");
         System.out.println("2. Liquido");
         System.out.println("3. Crema");
         System.out.println("4. Capsula");
         System.out.println("5. Polvo");
         System.out.println("6. Otro");
+        System.out.print("Ingrese el tipo del producto: ");
         int tipo = teclado.nextInt();
         teclado.nextLine();
         if (tipo == 6) {
             tipo = 0;
         }
-        if (tipo < 0 || tipo > 6) {
-            throw new Exception("Opcion no valida");
+        if (tipo <= 0 || tipo > 6) {
+            System.out.println("Opcion no valida");
+            return;
         }
-        System.out.println("Ingrese la cantidad del producto");
+        System.out.print("Ingrese la cantidad del producto: ");
         double cantidad = teclado.nextDouble();
-        if (cantidad < 0) {
-            throw new Exception("La cantidad debe de ser mayor a 0");
+        if (cantidad <= 0) {
+            System.out.println("La cantidad debe de ser mayor a 0");
+            return;
         }
         Producto producto = Producto.newBuilder()
                 .setNombre(nombre)
@@ -100,15 +103,97 @@ public class Menu {
     }
 
     private static void alterarProductoEnInventario() {
-        mostrarProductos();
-        System.out.println("Seleccione el indice");
+        int size = mostrarProductos();
+        if (size == 0) {
+            System.out.println("No hay productos que mostrar");
+            return;
+        }
+        System.out.print("\nIngrese el numero del producto que desea modificar: ");
+        int index = teclado.nextInt();
+        teclado.nextLine();
+        if (index <= 0 || index > size) {
+            System.out.println("Debes seleccionar un numero valido");
+            return;
+        }
+        Producto.Builder producto = service.obtenerProducto(index - 1).toBuilder();
+
+        int opcion = 0;
+
+        do {
+            System.out.println("\n1. Nombre");
+            System.out.println("2. Formula");
+            System.out.println("3. Precio");
+            System.out.println("4. Tipo");
+            System.out.println("5. Cantidad");
+            System.out.println("0. Guardar");
+            System.out.print("Ingrese el numero de lo que desea modificar: ");
+            opcion = teclado.nextInt();
+            teclado.nextLine();
+            switch (opcion) {
+                case 1:
+                    System.out.print("Ingrese el nombre del producto: ");
+                    String nombre = teclado.nextLine();
+                    producto.setNombre(nombre);
+                    break;
+                case 2:
+                    System.out.print("Ingrese la formula del producto: ");
+                    String formula = teclado.nextLine();
+                    producto.setFormula(formula);
+                    break;
+                case 3:
+                    System.out.print("Ingrese el precio del producto: ");
+                    double precio = teclado.nextDouble();
+                    teclado.nextLine();
+                    if (precio < 0) {
+                        System.out.println("El precio debe de ser mayor o igual a 0");
+                        return;
+                    }
+                    producto.setPrecio(precio);
+                    break;
+                case 4:
+                    System.out.println("1. Tableta");
+                    System.out.println("2. Liquido");
+                    System.out.println("3. Crema");
+                    System.out.println("4. Capsula");
+                    System.out.println("5. Polvo");
+                    System.out.println("6. Otro");
+                    System.out.print("Ingrese el tipo del producto: ");
+                    int tipo = teclado.nextInt();
+                    teclado.nextLine();
+                    if (tipo == 6) {
+                        tipo = 0;
+                    }
+                    if (tipo <= 0 || tipo > 6) {
+                        System.out.println("Opcion no valida");
+                        return;
+                    }
+                    producto.setTipo(Producto.TipoMedicamento.forNumber(tipo));
+                    break;
+                case 5:
+                    System.out.print("Ingrese la cantidad del producto: ");
+                    double cantidad = teclado.nextDouble();
+                    if (cantidad <= 0) {
+                        System.out.println("La cantidad debe de ser mayor a 0");
+                        return;
+                    }
+                    producto.setCantidad(cantidad);
+                    break;
+                case 0:
+                    service.alterarProductoInventario(producto.build());
+                    break;
+                default:
+                    System.out.println("Opción no válida");
+                    break;
+            }
+        } while (opcion != 0);
+
     }
 
-    private static void comprarProducto() {
+    private static void comprar() {
         // Aquí va la lógica para comprar un producto
     }
 
-    private static void venderProducto() {
+    private static void vender() {
         // Aquí va la lógica para vender un producto
     }
 
@@ -116,18 +201,18 @@ public class Menu {
         // Aquí va la lógica para mostrar las existencias de los productos
     }
 
-    private static void mostrarProductos() {
-        List<Producto> productos = service.getProductos();
-        AtomicInteger index = new AtomicInteger(1);
+    private static int mostrarProductos() {
+        List<Producto> productos = service.obtenerProductos();
+        AtomicInteger index = new AtomicInteger(0);
         productos.forEach(element -> {
-            System.out.println("--------------- Producto " + index + " --------------");
+            System.out.println("\n--------------- Producto " + index.incrementAndGet() + " --------------");
             System.err.println("\tNombre: " + element.getNombre());
             System.err.println("\tFormula: " + element.getFormula());
             System.err.println("\tPrecio: " + element.getPrecio());
             System.err.println("\tTipo: " + element.getTipo());
             System.err.println("\tCantidad: " + element.getCantidad());
             System.out.println("-----------------------------------------");
-            index.getAndIncrement();
         });
+        return productos.size();
     }
 }
