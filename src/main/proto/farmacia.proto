@@ -1,0 +1,59 @@
+syntax = "proto3";
+package farmacia;
+
+option java_multiple_files = true;
+option java_package = "farmacia";
+
+// Definición de un Producto dentro del inventario de la farmacia.
+message Producto {
+  // Enumeración para especificar el tipo de medicamento.
+  enum TipoMedicamento {
+    TIPO_MEDICAMENTO_UNSPECIFIED = 0;
+    TIPO_MEDICAMENTO_TABLETA = 1;
+    TIPO_MEDICAMENTO_LIQUIDO = 2;
+    TIPO_MEDICAMENTO_CREMA = 3;
+    TIPO_MEDICAMENTO_CAPSULA = 4;
+    TIPO_MEDICAMENTO_POLVO = 5;
+  }
+
+  TipoMedicamento tipo = 1; // Tipo de medicamento (tableta, líquido, etc.).
+  string nombre = 2; // Nombre del producto.
+  string formula = 3; // Fórmula química del medicamento, por ejemplo, "Acido Acetilsalicílico".
+  double cantidad = 4; // Cantidad del producto, podría ser en número (para pastillas) o mililitros/gramos para otros tipos.
+  double precio = 5; // Precio del producto.
+  int64 id = 6;
+}
+
+// Elemento de producto que forma parte de una operación de compra o venta, incluyendo el precio específico en el momento de la operación.
+message ProductoOperacion {
+  int64 id_producto = 1; // Nombre del producto.
+  int64 cantidad = 2; // Cantidad del producto en la operación.
+  double precio_en_operacion = 3; // Precio del producto en el momento de la operación.
+}
+
+// Definición para las operaciones de compra y venta.
+message Operacion {
+  enum TipoOperacion {
+    TIPO_OPERACION_UNSPECIFIED = 0;
+    TIPO_OPERACION_COMPRA = 1;
+    TIPO_OPERACION_VENTA = 2;
+  }
+
+  TipoOperacion tipo = 1; // Tipo de operación, compra o venta.
+  repeated ProductoOperacion productos = 2; // Productos involucrados en la operación, con su precio en el momento de la operación.
+  double total = 3; // Total en dinero de la operación.
+  string fecha = 4; // Fecha de la operación.
+}
+
+// Definición del inventario de la farmacia.
+message Inventario {
+  repeated Producto productos = 1; // Lista de productos en la farmacia.
+  map<int64, int64> existencias = 2; // Número de existencias por producto, usando el nombre del producto como clave.
+  int64 ultimo_id_usado = 3; // Último ID utilizado, para generar nuevos IDs de forma única.
+}
+
+// Definición de la farmacia, incluyendo el inventario y el historial de operaciones.
+message Farmacia {
+  Inventario inventario = 1; // Inventario actual de la farmacia.
+  repeated Operacion historial_operaciones = 2; // Historial de compras y ventas.
+}
