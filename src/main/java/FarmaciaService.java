@@ -85,7 +85,7 @@ public class FarmaciaService {
 
     // Método auxiliar para registrar operaciones de compra o venta de productos.
     private void operacionProducto(List<ProductoOperacion> productos, Operacion.TipoOperacion tipo) {
-        Double total = productos.parallelStream().map(ProductoOperacion::getPrecioEnOperacion).reduce(0.0, Double::sum);
+        Double total = productos.parallelStream().map(element -> element.getPrecioEnOperacion() * element.getCantidad()).reduce(0.0, Double::sum);
         Inventario inventario = farmacia.getInventario();
         Operacion operacion = Operacion.newBuilder()
                 .addAllProductos(productos)
