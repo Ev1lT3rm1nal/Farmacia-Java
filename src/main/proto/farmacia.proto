@@ -26,9 +26,10 @@ message Producto {
 
 // Elemento de producto que forma parte de una operación de compra o venta, incluyendo el precio específico en el momento de la operación.
 message ProductoOperacion {
-  int64 id_producto = 1; // Nombre del producto.
-  int64 cantidad = 2; // Cantidad del producto en la operación.
-  double precio_en_operacion = 3; // Precio del producto en el momento de la operación.
+  string nombre = 1; // Nombre del producto.
+  int64 id_producto = 2; // Nombre del producto.
+  int64 cantidad = 3; // Cantidad del producto en la operación.
+  double precio_en_operacion = 4; // Precio del producto en el momento de la operación.
 }
 
 // Definición para las operaciones de compra y venta.

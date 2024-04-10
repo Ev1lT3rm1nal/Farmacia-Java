@@ -1,4 +1,5 @@
 import farmacia.*;
+import farmacia.Operacion.TipoOperacion;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 public class FarmaciaService {
     private final Farmacia.Builder farmacia;
@@ -33,7 +33,8 @@ public class FarmaciaService {
 
     public void guardar() {
         try {
-            Files.write(Paths.get(filePath), farmacia.build().toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(Paths.get(filePath), farmacia.build().toByteArray(), StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -42,7 +43,8 @@ public class FarmaciaService {
     public void agregarProductoInventario(Producto producto) {
         Inventario inventario = farmacia.getInventario();
         long id = inventario.getUltimoIdUsado() + 1;
-        // Agrega el nuevo producto al inventario al cual se le asigna un id para poderlo indexar
+        // Agrega el nuevo producto al inventario al cual se le asigna un id para
+        // poderlo indexar
         farmacia.getInventarioBuilder().addProductos(producto.toBuilder().setId(id)).setUltimoIdUsado(id);
     }
 
@@ -53,7 +55,8 @@ public class FarmaciaService {
     public void alterarProductoInventario(Producto producto) {
         Inventario inventario = farmacia.getInventario();
         List<Producto> productos = inventario.getProductosList();
-        List<Producto> productos_nuevos = productos.parallelStream().filter(element -> element.getId() != producto.getId()).collect(Collectors.toList());
+        List<Producto> productos_nuevos = productos.parallelStream()
+                .filter(element -> element.getId() != producto.getId()).collect(Collectors.toList());
         productos_nuevos.add(producto);
         farmacia.setInventario(inventario.toBuilder().clearProductos().addAllProductos(productos_nuevos));
     }
@@ -77,7 +80,15 @@ public class FarmaciaService {
                 .build();
         Map<Long, Long> existencias = inventario.getExistenciasMap();
         productos.forEach(productoOperacion -> {
-            farmacia.getInventarioBuilder().putExistencias(existencias.get(productoOperacion.getIdProducto()), productoOperacion.getCantidad());
+            Long num = existencias.getOrDefault(productoOperacion.getIdProducto(), 0L);
+            if (tipo == TipoOperacion.TIPO_OPERACION_COMPRA) {
+                num += productoOperacion.getCantidad();
+            } else {
+                num -= productoOperacion.getCantidad();
+            }
+
+            farmacia.getInventarioBuilder().putExistencias(productoOperacion.getIdProducto(),
+                    num);
         });
 
         farmacia.addHistorialOperaciones(operacion);
@@ -88,7 +99,8 @@ public class FarmaciaService {
         List<Producto> productosList = farmacia.getInventario().getProductosList();
         Map<Long, Long> existencias = farmacia.getInventario().getExistenciasMap();
 
-        existencias.forEach((key, value) -> productosList.parallelStream().filter(elemento -> elemento.getId() == key).findFirst().ifPresent(producto1 -> productos.put(producto1, value)));
+        existencias.forEach((key, value) -> productosList.parallelStream().filter(elemento -> elemento.getId() == key)
+                .findFirst().ifPresent(producto1 -> productos.put(producto1, value)));
         return productos;
     }
 
@@ -99,8 +111,13 @@ public class FarmaciaService {
     public ProductoOperacion agregarProducto(Producto producto, long cantidad) {
         return ProductoOperacion.newBuilder()
                 .setCantidad(cantidad)
+                .setNombre(producto.getNombre())
                 .setIdProducto(producto.getId())
                 .setPrecioEnOperacion(producto.getPrecio())
                 .build();
+    }
+
+    public List<Operacion> obtenerHistorial() {
+        return farmacia.getHistorialOperacionesList();
     }
 }
