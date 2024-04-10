@@ -13,7 +13,6 @@ import java.nio.file.StandardOpenOption;
 // Importaciones para el manejo de fechas y colecciones.
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 // Define la clase FarmaciaService que proporciona funcionalidades para gestionar una farmacia.

@@ -7,12 +7,9 @@ import farmacia.ProductoOperacion;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 // Define la clase Menu que contiene toda la lógica para interactuar con el usuario.
@@ -309,7 +306,8 @@ public class Menu {
 
         labeled: do {
             System.out.println("\n1. Agregar al carrito");
-            System.out.println("2. Cancelar");
+            System.out.println("2. Buscar");
+            System.out.println("3. Cancelar");
             System.out.println("0. Comprar");
             System.out.print("Ingrese una opción: ");
             try {
@@ -340,9 +338,9 @@ public class Menu {
                     // Obtiene el producto seleccionado.
                     Producto producto = service.obtenerProducto(id);
                     System.out.print("Ingrese la cantidad a comprar: ");
-                    int cantidad = 0;
+                    Long cantidad = 0L;
                     try {
-                        cantidad = teclado.nextInt();
+                        cantidad = teclado.nextLong();
                     } catch (InputMismatchException e) {
                         System.out.println("Debes ingresar un número válido");
                         continue;
@@ -357,6 +355,26 @@ public class Menu {
                     productos.add(service.agregarProducto(producto, cantidad));
                     break;
                 case 2:
+                    producto = buscarProducto();
+                    if (producto != null) {
+                        System.out.print("Ingrese la cantidad a comprar: ");
+                        cantidad = 0L;
+                        try {
+                            cantidad = teclado.nextLong();
+                        } catch (InputMismatchException e) {
+                            System.out.println("Debes ingresar un número válido");
+                            continue;
+                        } finally {
+                            teclado.nextLine(); // Limpia el buffer del teclado.
+                        }
+                        if (cantidad <= 0) {
+                            System.out.println("La cantidad debe de ser mayor que 0");
+                            continue; // Repite el ciclo si la cantidad no es válida.
+                        }
+                        productos.add(service.agregarProducto(producto, cantidad));
+                    }
+                    break;
+                case 3:
                     // Permite al usuario cancelar la compra.
                     System.out.print("¿Estás seguro que desea continuar? (S/N): ");
                     String respuesta = teclado.nextLine();
@@ -378,7 +396,7 @@ public class Menu {
                     }
                     break;
             }
-        } while (opcion != 2); // Repite hasta que el usuario decida cancelar o completar la compra.
+        } while (opcion != 3); // Repite hasta que el usuario decida cancelar o completar la compra.
 
     }
 
@@ -656,7 +674,8 @@ public class Menu {
             System.out.println("\n    Factura: " + (operacion.getFactura() ? "Si" : "No"));
             System.out.println("    ================== Productos ==================");
             operacion.getProductosList().forEach(producto -> {
-                System.out.println("\tNombre: " + producto.getNombre() + ", cantidad: " + producto.getCantidad() + " = " + producto.getCantidad() * producto.getPrecioEnOperacion());
+                System.out.println("\tNombre: " + producto.getNombre() + ", cantidad: " + producto.getCantidad() + " = "
+                        + producto.getCantidad() * producto.getPrecioEnOperacion());
             });
             System.out.println("    ===============================================");
             System.out.println("\n----------------------------------------------------------");
