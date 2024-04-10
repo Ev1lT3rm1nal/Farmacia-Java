@@ -4,6 +4,7 @@ import farmacia.Producto;
 import farmacia.ProductoOperacion;
 
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,14 +13,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 // Define la clase Menu que contiene toda la lógica para interactuar con el usuario.
 public class Menu {
-    // Instancia de FarmaciaService para acceder a las funcionalidades del sistema de la farmacia.
+    // Instancia de FarmaciaService para acceder a las funcionalidades del sistema
+    // de la farmacia.
     private final static FarmaciaService service = new FarmaciaService();
     // Scanner para leer la entrada del usuario desde la consola.
     private final static Scanner teclado = new Scanner(System.in);
 
     // Método principal que ejecuta el menú interactivo de la farmacia.
     public static void main(String[] args) throws Exception {
-        int opcion = 0;
+        int opcion = 8;
         System.out.println("\n======= Menú de la Farmacia =======");
         do {
             // Muestra las opciones disponibles del menú.
@@ -32,8 +34,14 @@ public class Menu {
             System.out.println("7. Mostrar todo el historial de compra/ventas");
             System.out.println("0. Salir");
             System.out.print("\nSeleccione una opción: ");
-            opcion = teclado.nextInt();
-            teclado.nextLine(); // Limpia el buffer del teclado.
+            try {
+                opcion = teclado.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Debes ingresar un número válido");
+                continue;
+            } finally {
+                teclado.nextLine(); // Limpia el buffer del teclado.
+            }
             switch (opcion) {
                 case 1:
                     // Llama a la función para agregar un producto al inventario.
@@ -76,15 +84,22 @@ public class Menu {
     }
 
     // Método para agregar un producto nuevo al inventario.
-    private static void agregarProductoAlInventario() throws Exception {
+    private static void agregarProductoAlInventario() {
         // Solicita al usuario los detalles del nuevo producto.
         System.out.print("Ingrese el nombre del producto: ");
         String nombre = teclado.nextLine();
         System.out.print("Ingrese la formula del producto: ");
         String formula = teclado.nextLine();
         System.out.print("Ingrese el precio del producto: ");
-        double precio = teclado.nextDouble();
-        teclado.nextLine(); // Limpia el buffer del teclado.
+        double precio = 0;
+        try {
+            precio = teclado.nextDouble();
+        } catch (InputMismatchException e) {
+            System.out.println("Debes ingresar un número válido");
+            return;
+        } finally {
+            teclado.nextLine(); // Limpia el buffer del teclado.
+        }
         // Verifica que el precio sea válido.
         if (precio < 0) {
             System.out.println("El precio debe de ser mayor o igual a 0");
@@ -98,8 +113,15 @@ public class Menu {
         System.out.println("5. Polvo");
         System.out.println("6. Otro");
         System.out.print("Ingrese el tipo del producto: ");
-        int tipo = teclado.nextInt();
-        teclado.nextLine(); // Limpia el buffer del teclado.
+        int tipo = 0;
+        try {
+            tipo = teclado.nextInt();
+        } catch (InputMismatchException e) {
+            System.out.println("Debes ingresar un número válido");
+            return;
+        } finally {
+            teclado.nextLine(); // Limpia el buffer del teclado.
+        }
         // Verifica que el tipo seleccionado sea válido.
         if (tipo <= 0 || tipo > 6) {
             System.out.println("Opción no válida");
@@ -109,7 +131,15 @@ public class Menu {
             tipo = 0; // Ajusta el tipo a un valor neutro si se selecciona "Otro".
         }
         System.out.print("Ingrese la cantidad del producto: ");
-        double cantidad = teclado.nextDouble();
+        double cantidad = 0;
+        try {
+            cantidad = teclado.nextDouble();
+        } catch (InputMismatchException e) {
+            System.out.println("Debes ingresar un número válido");
+            return;
+        } finally {
+            teclado.nextLine(); // Limpia el buffer del teclado.
+        }
         // Verifica que la cantidad sea válida.
         if (cantidad <= 0) {
             System.out.println("La cantidad debe de ser mayor a 0");
@@ -136,8 +166,15 @@ public class Menu {
         }
         // Solicita al usuario seleccionar el producto a modificar.
         System.out.print("\nIngrese el número del producto que desea modificar: ");
-        int index = teclado.nextInt();
-        teclado.nextLine(); // Limpia el buffer del teclado.
+        int index = 0;
+        try {
+            index = teclado.nextInt();
+        } catch (InputMismatchException e) {
+            System.out.println("Debes ingresar un número válido");
+            return;
+        } finally {
+            teclado.nextLine(); // Limpia el buffer del teclado.
+        }
         // Verifica que el índice seleccionado sea válido.
         if (index <= 0 || index > size) {
             System.out.println("Debes seleccionar un número válido");
@@ -147,7 +184,8 @@ public class Menu {
         Producto.Builder producto = service.obtenerProducto(index - 1).toBuilder();
 
         int opcion = 0;
-        // Muestra las opciones de modificación disponibles para el producto seleccionado.
+        // Muestra las opciones de modificación disponibles para el producto
+        // seleccionado.
         do {
             System.out.println("\n1. Nombre");
             System.out.println("2. Formula");
@@ -156,8 +194,14 @@ public class Menu {
             System.out.println("5. Cantidad");
             System.out.println("0. Guardar");
             System.out.print("Ingrese el número de lo que desea modificar: ");
-            opcion = teclado.nextInt();
-            teclado.nextLine(); // Limpia el buffer del teclado.
+            try {
+                opcion = teclado.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Debes ingresar un número válido");
+                continue;
+            } finally {
+                teclado.nextLine(); // Limpia el buffer del teclado.
+            }
             switch (opcion) {
                 case 1:
                     // Modifica el nombre del producto.
@@ -174,8 +218,15 @@ public class Menu {
                 case 3:
                     // Modifica el precio del producto.
                     System.out.print("Ingrese el precio del producto: ");
-                    double precio = teclado.nextDouble();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    double precio = 0;
+                    try {
+                        precio = teclado.nextDouble();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        return;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (precio < 0) {
                         System.out.println("El precio debe de ser mayor o igual a 0");
                         return;
@@ -191,8 +242,15 @@ public class Menu {
                     System.out.println("5. Polvo");
                     System.out.println("6. Otro");
                     System.out.print("Ingrese el tipo del producto: ");
-                    int tipo = teclado.nextInt();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    int tipo = 0;
+                    try {
+                        tipo = teclado.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        continue;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (tipo <= 0 || tipo > 6) {
                         System.out.println("Opción no válida");
                         return;
@@ -205,7 +263,15 @@ public class Menu {
                 case 5:
                     // Modifica la cantidad disponible del producto.
                     System.out.print("Ingrese la cantidad del producto: ");
-                    double cantidad = teclado.nextDouble();
+                    double cantidad = 0;
+                    try {
+                        cantidad = teclado.nextDouble();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        return;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (cantidad <= 0) {
                         System.out.println("La cantidad debe de ser mayor a 0");
                         return;
@@ -241,14 +307,27 @@ public class Menu {
             System.out.println("2. Cancelar");
             System.out.println("0. Comprar");
             System.out.print("Ingrese una opción: ");
-            opcion = teclado.nextInt();
-            teclado.nextLine(); // Limpia el buffer del teclado.
+            try {
+                opcion = teclado.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Debes ingresar un número válido");
+                continue;
+            } finally {
+                teclado.nextLine(); // Limpia el buffer del teclado.
+            }
             switch (opcion) {
                 case 1:
                     // Permite al usuario agregar un producto al carrito de compras.
                     System.out.print("Ingrese el índice el producto que desea comprar: ");
-                    int indice = teclado.nextInt();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    int indice = 0;
+                    try {
+                        indice = teclado.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        continue;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (indice <= 0 || indice > size) {
                         System.out.println("Índice no válido");
                         continue; // Repite el ciclo si el índice no es válido.
@@ -256,8 +335,15 @@ public class Menu {
                     // Obtiene el producto seleccionado.
                     Producto producto = service.obtenerProducto(indice - 1);
                     System.out.print("Ingrese la cantidad a comprar: ");
-                    int cantidad = teclado.nextInt();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    int cantidad = 0;
+                    try {
+                        cantidad = teclado.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        continue;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (cantidad <= 0) {
                         System.out.println("La cantidad debe de ser mayor que 0");
                         continue; // Repite el ciclo si la cantidad no es válida.
@@ -308,14 +394,27 @@ public class Menu {
             System.out.println("2. Cancelar");
             System.out.println("0. Vender");
             System.out.print("Ingrese una opción: ");
-            opcion = teclado.nextInt();
-            teclado.nextLine(); // Limpia el buffer del teclado.
+            try {
+                opcion = teclado.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Debes ingresar un número válido");
+                continue;
+            } finally {
+                teclado.nextLine(); // Limpia el buffer del teclado.
+            }
             switch (opcion) {
                 case 1:
                     // Permite al usuario agregar un producto al carrito de ventas.
                     System.out.print("Ingrese el índice el producto que desea vender: ");
-                    int indice = teclado.nextInt();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    int indice = 0;
+                    try {
+                        indice = teclado.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        continue;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (indice <= 0 || indice > products.size()) {
                         System.out.println("Índice no válido");
                         continue; // Repite el ciclo si el índice no es válido.
@@ -323,8 +422,15 @@ public class Menu {
                     // Obtiene el producto seleccionado.
                     Producto producto = products.get(indice - 1).getKey();
                     System.out.print("Ingrese la cantidad a vender: ");
-                    int cantidad = teclado.nextInt();
-                    teclado.nextLine(); // Limpia el buffer del teclado.
+                    int cantidad = 0;
+                    try {
+                        cantidad = teclado.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Debes ingresar un número válido");
+                        continue;
+                    } finally {
+                        teclado.nextLine(); // Limpia el buffer del teclado.
+                    }
                     if (cantidad <= 0) {
                         System.out.println("La cantidad debe de ser mayor que 0");
                         continue; // Repite el ciclo si la cantidad no es válida.
@@ -362,7 +468,8 @@ public class Menu {
 
     }
 
-    // Método para mostrar las existencias de los productos disponibles para la venta.
+    // Método para mostrar las existencias de los productos disponibles para la
+    // venta.
     private static List<Entry<Producto, Long>> mostrarExistenciasDeProductos() {
         // Obtiene la lista de productos con sus existencias.
         List<Map.Entry<Producto, Long>> productos = new ArrayList<>(service.obtenerProductosExistencias().entrySet());
