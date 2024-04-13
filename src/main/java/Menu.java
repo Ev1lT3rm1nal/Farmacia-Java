@@ -442,7 +442,7 @@ public class Menu {
                     } finally {
                         teclado.nextLine(); // Limpia el buffer del teclado.
                     }
-                    if (keys.contains(id)) {
+                    if (!keys.contains(id)) {
                         System.out.println("Id no válido");
                         continue; // Repite el ciclo si el índice no es válido.
                     }
